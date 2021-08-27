@@ -14,10 +14,30 @@ int ecall_install_application_key(
 
 int ecall_begin_application_deployment(char* application_id){ return 0; }
 
+int ecall_initialize_decryption_aes_gcm(
+    char* application_id,
+    unsigned int key_strength,
+    unsigned char* iv,
+    unsigned int iv_size,
+    unsigned char* tag,
+    unsigned int tag_size) { return 0; };
+
 int ecall_add_application_data(
     char* application_id,
     unsigned char* data,
     unsigned int data_size){ return 0; }
+
+int ecall_verify_application_sha256_rsa_pkcs1_v15(
+    char* application_id,
+    unsigned int key_strength,
+    unsigned char* digest,
+    unsigned int digest_size,
+    unsigned char* signature,
+    unsigned int signature_size,
+    unsigned char* public_key,
+    unsigned int public_key_size,
+    bool* digest_match,
+    bool* signature_match) { return 0; }
 
 int ecall_end_application_deployment(char* application_id){ return 0; }
 
