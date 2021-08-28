@@ -41,6 +41,8 @@ int ecall_verify_application_sha256_rsa_pkcs1_v15(
 
 int ecall_end_application_deployment(char* application_id){ return 0; }
 
+/* TODO, check why this isnt present in the flow in yocto */
+int __errno_location;
 
 /* Assemble UUID from constants generated from EDL file */
 #define TA_UUID							\
