@@ -1,6 +1,12 @@
 #include <string.h>
 #include <ConfidentialPackageSpecification_t.h>
 
+int ecall_ping(unsigned int* supported_contract_version) { return 0; }
+
+int ecall_is_operation_supported(
+    char* operation_name,
+    bool* is_supported) { return 0; }
+
 int ecall_get_device_public_key_data_size(unsigned int* data_size) { return 0; }
 
 int ecall_export_device_public_key(
@@ -12,7 +18,9 @@ int ecall_install_application_key(
     unsigned char* data,
     unsigned int data_size){ return 0; }
 
-int ecall_begin_application_deployment(char* application_id){ return 0; }
+int ecall_begin_application_deployment(
+    char* application_id,
+    unsigned long int total_data_size) { return 0; }
 
 int ecall_initialize_decryption_aes_gcm(
     char* application_id,
@@ -40,9 +48,6 @@ int ecall_verify_application_sha256_rsa_pkcs1_v15(
     bool* signature_match) { return 0; }
 
 int ecall_end_application_deployment(char* application_id){ return 0; }
-
-/* TODO, check why this isnt present in the flow in yocto */
-int __errno_location;
 
 /* Assemble UUID from constants generated from EDL file */
 #define TA_UUID							\
