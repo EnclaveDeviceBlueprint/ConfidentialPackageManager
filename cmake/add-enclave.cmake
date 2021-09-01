@@ -16,10 +16,10 @@ macro (add_enclave)
 
   string(REPLACE "gcc" "ld" LINKER ${CMAKE_C_COMPILER})
   set(CMAKE_C_LINK_EXECUTABLE
-    "${LINKER} <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> <LINK_LIBRARIES> -lgcc -o <TARGET>"
+    "${LINKER} <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> --start-group <OBJECTS> <LINK_LIBRARIES> --end-group -o <TARGET>"
   )
   set(CMAKE_CXX_LINK_EXECUTABLE
-    "${LINKER} <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> <OBJECTS> <LINK_LIBRARIES> -lgcc -o <TARGET>"
+    "${LINKER} <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS> --start-group <OBJECTS> <LINK_LIBRARIES> --end-group -o <TARGET>"
   )
 
   # Generate linker script from template.
@@ -52,6 +52,9 @@ macro (add_enclave)
   if (ENCLAVE_CXX)
     target_link_libraries(${ENCLAVE_TARGET} openenclave::oelibcxx)
   endif ()
+
+  find_library(LIBGCC NAMES libgcc.a)
+  target_link_libraries(${ENCLAVE_TARGET} ${LIBGCC})
 
   # Strip binary for release builds
   if (CMAKE_BUILD_TYPE STREQUAL Release)
