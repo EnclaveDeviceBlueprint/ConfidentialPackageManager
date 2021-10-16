@@ -4,55 +4,75 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(
-    "ConfidentialPackageManager"
-    VERSION 0.1
-    LANGUAGES C CXX)
+  "ConfidentialPackageSpecification"
+  VERSION 1.0
+  LANGUAGES C CXX)
 
+set(OE_TEE
+    ""
+    CACHE STRING "Select a Trusted Execution Environment (TEE) implementation.")
+set_property(CACHE OE_TEE PROPERTY STRINGS "SGX" "OP-TEE")
 
-# default locacion for the Open Enclave SDK directory
-if (NOT OE_PACKAGE_PREFIX) 
-  # optee directory (used for linker file)
-  set(OE_PACKAGE_PREFIX ${CMAKE_SOURCE_DIR}/../ms-iot.msiot-vscode-openenclave/sdk/optee/)
+set(OE_OPTEE_PLATFORM CACHE STRING "Select the target OP-TEE platform")
+set_property(CACHE OE_OPTEE_PLATFORM PROPERTY STRINGS "Grapeboard" "QEMU-ARMv8")
 
-  # Generic platform for Open Enclave TA's as we want to be plaform agnostic
-  set(OpenEnclave_DIR ${OE_PACKAGE_PREFIX}/armv8a-cps/lib/openenclave/cmake)
-endif()
+if ("${OE_TEE}" STREQUAL "SGX")
+  set(OE_SGX ON)
+  set(OE_OPTEE OFF)
+elseif ("${OE_TEE}" STREQUAL "OP-TEE")
+  set(OE_SGX OFF)
+  set(OE_OPTEE ON)
+else ()
+  message(FATAL_ERROR "OE_TEE must be one of 'SGX' or 'OP-TEE'.")
+endif ()
 
-# Default location for the Confidential Package Specification
-if (NOT CPS_DIR) 
-  set(CPS_DIR ${CMAKE_SOURCE_DIR}/../ConfidentialPackageSpecification/)
-endif()
+if (OE_OPTEE)
+  if ("${OE_OPTEE_PLATFORM}" STREQUAL "QEMU-ARMv8")
+    set(OE_OPTEE_QEMU_ARMV8 ON)
+    set(OE_OPTEE_GRAPEBOARD OFF)
+  elseif ("${OE_OPTEE_PLATFORM}" STREQUAL "Grapeboard")
+    set(OE_OPTEE_QEMU_ARMV8 OFF)
+    set(OE_OPTEE_GRAPEBOARD ON)
+  elseif(DEFINED OE_PACKAGE_OPTEE_PLATFORM)
+    set(OE_OPTEE_QEMU_ARMV8 OFF)
+    set(OE_OPTEE_GRAPEBOARD OFF)
+  else()
+    message(
+      FATAL_ERROR
+        "OE_OPTEE_PLATFORM must be one of 'QEMU-ARMv8' or 'Grapeboard'.")
+  endif ()
+endif ()
 
-# Check build type, and default to release build
-if (NOT CMAKE_BUILD_TYPE) 
-    message(STATUS "---------------------------------------------------------")
-    message(STATUS " Build type not specified, defaulting to Release build")
-    message(STATUS "---------------------------------------------------------")
-    set(CMAKE_BUILD_TYPE Release)
-    set(OE_DEBUG OFF)
-else() 
-  set(CMAKE_BUILD_TYPE Debug)
+if (OE_OPTEE)
+  if (NOT OE_PACKAGE_PREFIX)
+    set(OE_PACKAGE_PREFIX "/opt/openenclave-sdk/sdk/optee")
+  endif ()
+
+  if (OE_OPTEE_QEMU_ARMV8)
+    set(OE_PACKAGE_OPTEE_PLATFORM vexpress-qemu_armv8a)
+  elseif (OE_OPTEE_GRAPEBOARD)
+    set(OE_PACKAGE_OPTEE_PLATFORM ls-ls1012grapeboard)
+  endif ()
+
+  set(OpenEnclave_DIR
+      ${OE_PACKAGE_PREFIX}/${OE_PACKAGE_OPTEE_PLATFORM}/lib/openenclave/cmake)
+endif ()
+
+string(TOUPPER ${CMAKE_BUILD_TYPE} OE_BUILD_TYPE)
+if ("${OE_BUILD_TYPE}" STREQUAL "DEBUG")
   set(OE_DEBUG ON)
-endif()
+else ()
+  set(OE_DEBUG OFF)
+endif ()
 
 find_package(OpenEnclave CONFIG REQUIRED)
 
+list(APPEND CMAKE_MODULE_PATH "cmake")
+
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out/lib)
 
-include(cmake/add-enclave.cmake)
-
-add_custom_command(
-    OUTPUT
-        ConfidentialPackageSpecification_t.h
-        ConfidentialPackageSpecification_t.c
-        ConfidentialPackageSpecification_args.h
-    DEPENDS ${CPS_DIR}/ConfidentialPackageSpecification.edl
-    COMMAND openenclave::oeedger8r --trusted ${CPS_DIR}/ConfidentialPackageSpecification.edl)
-
-add_enclave(
-    TARGET ConfidentialPackageManager
-    DEPENDS CPS_target
-    SOURCES
-        source/main.c
-        ${CMAKE_CURRENT_BINARY_DIR}/ConfidentialPackageSpecification_t.c)
+add_subdirectory(source)
