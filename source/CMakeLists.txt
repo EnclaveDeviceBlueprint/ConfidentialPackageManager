@@ -11,9 +11,10 @@ add_custom_command(
   DEPENDS ${CPS_DIR}/ConfidentialPackageSpecification.edl
   COMMAND openenclave::oeedger8r --trusted ${CPS_DIR}/ConfidentialPackageSpecification.edl)
 
+          
 add_enclave(
   TARGET ConfidentialPackageManager
-  UUID 5d286b7e-ff68-4b4b-b7b8-05f55dbfd0c7
+  UUID d3c5bbbc-adad-11eb-bd25-4362002e2749
     SOURCES
     main.c
     ${CMAKE_CURRENT_BINARY_DIR}/ConfidentialPackageSpecification_t.c)
