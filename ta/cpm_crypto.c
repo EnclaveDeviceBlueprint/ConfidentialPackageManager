@@ -17,7 +17,7 @@ int cpm_crypto_init(const unsigned char *key, const unsigned char *iv)
         &todo_ctx,              /* The GCM context. */
         MBEDTLS_CIPHER_ID_AES , /* The 128-bit block cipher to use */
         key,                    /* The encryption key  */
-        256/8);                 /* The key size in bits. ( 128, 192 or 256 bits) */
+        256);                   /* The key size in bits. ( 128, 192 or 256 bits) */
     
     if (ret != 0) {
         goto error_key;
@@ -27,14 +27,13 @@ int cpm_crypto_init(const unsigned char *key, const unsigned char *iv)
         &todo_ctx,              /* The GCM context. */
         MBEDTLS_GCM_DECRYPT,    /* The operation to perform: MBEDTLS_GCM_ENCRYPT or MBEDTLS_GCM_DECRYPT. */
         iv,                     /* The initialization vector. */
-        16,                     /* The length of the IV */
+        12,                     /* The length of the IV */
         NULL,                   /* The buffer holding the (optional) additional data */
         0);                     /* The length of the (optional) additional data */
     
     if (ret != 0) {
         goto error_gcm_starts;
     }
-    return 0;
     
     todo_ta_buffer = malloc(TODO_MAX_TA_SIZE);
     if (todo_ta_buffer == NULL) {
@@ -42,6 +41,8 @@ int cpm_crypto_init(const unsigned char *key, const unsigned char *iv)
     }
     todo_ta_size = 0;
 
+    return 0;
+    
 gcm_mem_error:
 error_gcm_starts:
 error_key:
@@ -68,5 +69,32 @@ int cpm_crypto_update( unsigned char* data, unsigned int data_size)
         &(todo_ta_buffer[todo_ta_size]));   /* Output data */
     
     todo_ta_size += data_size;
+}
+
+int cpm_crypto_finish(unsigned char* tag, const unsigned int tag_size )
+{
+    int ret = 0;
+
+    if (tag == NULL) {
+        return -1;
+    }
+
+    ret =mbedtls_gcm_finish(
+        &todo_ctx,                          /* The GCM context. */
+        tag,                                /* Buffer for holding the tag */
+	tag_size);                          /* Lenght of the tag to generate */
+
+    return ret;
+}
+
+int cpm_crypto_get_buffer(uint8_t** bufferp, uint32_t* buffer_sizep)
+{
+    if (bufferp == NULL) { return -1;}
+    if (buffer_sizep == NULL) { return -2;}
+
+    *bufferp = todo_ta_buffer;
+    *buffer_sizep = todo_ta_size;
+
+    return 0;
 }
 

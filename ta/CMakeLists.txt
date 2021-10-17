@@ -16,8 +16,9 @@ add_enclave(
   TARGET ConfidentialPackageManager
   UUID d3c5bbbc-adad-11eb-bd25-4362002e2749
     SOURCES
+    ta_secstor.c
     cpm_crypto.c
-    main.c
+    cpm.c
     ${CMAKE_CURRENT_BINARY_DIR}/ConfidentialPackageSpecification_t.c)
 
 target_link_libraries(ConfidentialPackageManager openenclave::oeenclave openenclave::oecryptombedtls)
