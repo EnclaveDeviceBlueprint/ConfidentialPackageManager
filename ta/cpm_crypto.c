@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <mbedtls/gcm.h>
-#include "cpm_crypto.h"
+#include <tee_internal_api.h>
 
+#include "cpm_config.h"
+#include "cpm_crypto.h"
+#include "cpm.h"
 
 mbedtls_gcm_context todo_ctx;
 char* todo_ta_buffer;
@@ -35,7 +38,7 @@ int cpm_crypto_init(const unsigned char *key, const unsigned char *iv)
         goto error_gcm_starts;
     }
     
-    todo_ta_buffer = malloc(TODO_MAX_TA_SIZE);
+    todo_ta_buffer = TEE_Malloc(TODO_MAX_TA_SIZE,TEE_MALLOC_FILL_ZERO);
     if (todo_ta_buffer == NULL) {
         goto gcm_mem_error;
     }
@@ -59,6 +62,7 @@ int cpm_crypto_update( unsigned char* data, unsigned int data_size)
     }
     
     if ((todo_ta_size + data_size )> TODO_MAX_TA_SIZE) {
+        cpm_log("data_size to large (%i)", data_size);
         return -1;
     }
     
@@ -69,6 +73,8 @@ int cpm_crypto_update( unsigned char* data, unsigned int data_size)
         &(todo_ta_buffer[todo_ta_size]));   /* Output data */
     
     todo_ta_size += data_size;
+    
+    return 0;
 }
 
 int cpm_crypto_finish(unsigned char* tag, const unsigned int tag_size )
@@ -79,11 +85,11 @@ int cpm_crypto_finish(unsigned char* tag, const unsigned int tag_size )
         return -1;
     }
 
-    ret =mbedtls_gcm_finish(
+    ret = mbedtls_gcm_finish(
         &todo_ctx,                          /* The GCM context. */
         tag,                                /* Buffer for holding the tag */
-	tag_size);                          /* Lenght of the tag to generate */
-
+        tag_size);                          /* Lenght of the tag to generate */
+    
     return ret;
 }
 
