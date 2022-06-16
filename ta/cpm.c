@@ -288,7 +288,7 @@ ecall_end_application_deployment(char* application_id)
 
 OE_SET_ENCLAVE_OPTEE(
     TA_UUID,                        /* UUID */
-    2 * 1024 * 1024,                /* Heap size, in bytes */
+    12 * 1024 * 1024,               /* Heap size, in bytes */
         512 * 1024,                 /* Stack size, in bytes */
     (                               /* Flags */
         ( TA_FLAG_SINGLE_INSTANCE | 
